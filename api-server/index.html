@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood AI Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-slate-800 tracking-tight">How are you feeling?</h1>
+            <p class="text-slate-500 mt-2">Track your mood and get AI-powered support.</p>
+        </header>
+
+        <div class="glass border border-white shadow-xl rounded-2xl p-6 mb-8">
+            <textarea id="moodInput" rows="3" class="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all" placeholder="I'm feeling a bit stressed today because..."></textarea>
+            <button onclick="saveMood()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-200">
+                Log Mood & Ask AI
+            </button>
+        </div>
+
+        <div id="history" class="space-y-4">
+            <h2 class="text-xl font-semibold text-slate-700 mb-4">Your Recent History</h2>
+            </div>
+    </div>
+
+    <script>
+        async function fetchMoods() {
+            const res = await fetch('http://localhost:3000/api/moods');
+            const data = await res.json();
+            const container = document.getElementById('history');
+            container.innerHTML = '<h2 class="text-xl font-semibold text-slate-700 mb-4">Your Recent History</h2>';
+            
+            data.reverse().forEach(entry => {
+                const card = `
+                    <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase">${entry.full_name}</span>
+                        </div>
+                        <p class="text-slate-800 text-lg mb-4 italic">"${entry.mood_text}"</p>
+                        <div class="bg-slate-50 border-l-4 border-indigo-400 p-4 rounded-r-xl text-slate-600 text-sm">
+                            <strong>AI Support:</strong> ${entry.ai_message}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        async function saveMood() {
+            const text = document.getElementById('moodInput').value;
+            if (!text) return alert("Please type something!");
+
+            await fetch('http://localhost:3000/api/moods', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: 1, mood_text: text })
+            });
+
+            document.getElementById('moodInput').value = '';
+            fetchMoods();
+        }
+
+        // Load history on start
+        fetchMoods();
+    </script>
+</body>
+</html>
